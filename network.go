@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net"
 )
 
@@ -11,23 +10,16 @@ type NetworkParams struct {
 	Subnet *net.IPNet
 }
 
-func GenerateCommands(params NetworkParams) map[string]string {
+func GenerateCommands(params NetworkParams) (map[string]string, error) {
 	commands := make(map[string]string)
 
-	commands["firewall"] = fmt.Sprintf(
-		"set network %s subnet %s vlan %d",
-		params.Name, params.Subnet, params.VLANID,
-	)
+	var err error
 
-	commands["switch"] = fmt.Sprintf(
-		"vlan %d\nname %s",
-		params.VLANID, params.Name,
-	)
+	commands["firewall"], err = RenderFirewallPaloAlto(params)
 
-	commands["netbox"] = fmt.Sprintf(
-		`{"name": "%s", "vid": %d, "prefix": "%s"}`,
-		params.Name, params.VLANID, params.Subnet,
-	)
+	commands["switch"], err = RenderSwitchIOS(params)
 
-	return commands
+	commands["netbox"], err = Renderjson(params)
+
+	return commands, err
 }

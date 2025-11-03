@@ -16,7 +16,7 @@ func main() {
 	name, _ := reader.ReadString('\n') // read until user presses Enter
 	name = strings.TrimSpace(name)     // remove \n
 
-	fmt.Print("Enter VLAN ID: ")
+	fmt.Print("Enter VLAN ID (1-4094): ")
 	vlanStr, _ := reader.ReadString('\n')
 	vlanStr = strings.TrimSpace(vlanStr)
 	vlanID, err := strconv.Atoi(vlanStr) // convert to int
@@ -41,13 +41,15 @@ func main() {
 		return
 	}
 
+	fmt.Println("Using network:", network)
+
 	params := NetworkParams{
 		Name:   name,
 		VLANID: vlanID,
 		Subnet: network,
 	}
 
-	commands := GenerateCommands(params)
+	commands, err := GenerateCommands(params)
 
 	fmt.Println("\n--- Generated Commands ---")
 	fmt.Printf("Firewall:\n%s\n\n", commands["firewall"])

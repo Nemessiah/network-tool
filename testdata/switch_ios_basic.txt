@@ -1,0 +1,3 @@
+configure t
+vlan 1042
+name CLI_IT
