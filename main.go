@@ -40,13 +40,13 @@ func main() {
 		fmt.Println("Invalid subnet (" + subnetStr + ") format. Please use CIDR notation (e.g., 10.1.0.0/24).")
 		return
 	}
-
-	fmt.Println("Using network:", network)
+	subnet := string(network.String())
+	fmt.Println("Using network:", subnet)
 
 	params := NetworkParams{
 		Name:   name,
 		VLANID: vlanID,
-		Subnet: network,
+		Subnet: subnet,
 	}
 
 	commands, err := GenerateCommands(params)

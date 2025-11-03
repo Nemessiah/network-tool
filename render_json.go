@@ -1,16 +1,27 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 )
+
+type NetboxPayload struct {
+	Name   string `json:"name"`
+	VID    int    `json:"vid"`
+	Prefix string `json:"prefix"`
+}
 
 func Renderjson(info NetworkParams) (string, error) {
 	var err error
 
-	output := fmt.Sprintf(
-		`{"name": "%s", "vid": %d, "prefix": "%s"}`,
-		info.Name, info.VLANID, info.Subnet,
-	)
+	jsonInput := NetboxPayload{
+		Name:   info.Name,
+		VID:    info.VLANID,
+		Prefix: info.Subnet,
+	}
+
+	json, err := json.Marshal(jsonInput)
+
+	output := string(json)
 
 	return output, err
 }

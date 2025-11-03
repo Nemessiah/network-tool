@@ -1,13 +1,9 @@
 package main
 
-import (
-	"net"
-)
-
 type NetworkParams struct {
 	Name   string
 	VLANID int
-	Subnet *net.IPNet
+	Subnet string
 }
 
 func GenerateCommands(params NetworkParams) (map[string]string, error) {

@@ -7,16 +7,22 @@ import (
 	"testing"
 )
 
+func visible(s string) string {
+	s = strings.ReplaceAll(s, "\r", "␍")
+	s = strings.ReplaceAll(s, "\n", "␤\n")
+	s = strings.ReplaceAll(s, "\t", "→\t")
+	return s
+}
 func TestRenderSwitchIOS_Basic(t *testing.T) {
 	_, ipNet, err := net.ParseCIDR("10.1.0.0/24")
 	if err != nil {
 		t.Fatalf("bad test CIDR: %v", err)
 	}
-
+	subnet := string(ipNet.IP)
 	var params = NetworkParams{
 		Name:   "CLI_IT",
 		VLANID: 1042,
-		Subnet: ipNet,
+		Subnet: subnet,
 	}
 
 	got, err := RenderSwitchIOS(params)
@@ -31,6 +37,6 @@ func TestRenderSwitchIOS_Basic(t *testing.T) {
 	want = strings.ReplaceAll(want, "\r\n", "\n")
 
 	if got != want {
-		t.Fatalf("output mismatch:\n--- want ---\n%s\n--- got ---\n%s", want, got)
+		t.Fatalf("output mismatch:\n--- want ---\n%s\n--- got ---\n%s", visible(want), visible(got))
 	}
 }
