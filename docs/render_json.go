@@ -1,7 +1,9 @@
-package main
+package docs
 
 import (
 	"encoding/json"
+
+	"github.com/nemessiah/network-tool/network"
 )
 
 type NetboxPayload struct {
@@ -10,7 +12,7 @@ type NetboxPayload struct {
 	Prefix string `json:"prefix"`
 }
 
-func Renderjson(info NetworkParams) (string, error) {
+func Renderjson(info network.NetworkParams) (string, error) {
 	var err error
 
 	jsonInput := NetboxPayload{

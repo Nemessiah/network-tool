@@ -5,6 +5,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/nemessiah/network-tool/network"
+	"github.com/nemessiah/network-tool/switchcommands"
 )
 
 func visible(s string) string {
@@ -19,13 +22,13 @@ func TestRenderSwitchIOS_Basic(t *testing.T) {
 		t.Fatalf("bad test CIDR: %v", err)
 	}
 	subnet := string(ipNet.IP)
-	var params = NetworkParams{
+	var params = network.NetworkParams{
 		Name:   "CLI_IT",
 		VLANID: 1042,
 		Subnet: subnet,
 	}
 
-	got, err := RenderSwitchIOS(params)
+	got, err := switchcommands.RenderSwitchIOS(params)
 	if err != nil {
 		t.Fatalf("RenderSwitchIOS() returned error: %v", err)
 	}

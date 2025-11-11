@@ -7,6 +7,9 @@ import (
 	"os"      // gives access to stdin/stdout
 	"strconv" // convert strings to numbers
 	"strings" // string trimming/splitting
+
+	"github.com/nemessiah/network-tool/frontend"
+	"github.com/nemessiah/network-tool/network"
 )
 
 func main() {
@@ -35,21 +38,23 @@ func main() {
 	subnetStr, _ := reader.ReadString('\n')
 	subnetStr = strings.TrimSpace(subnetStr)
 
-	_, network, err := net.ParseCIDR(subnetStr)
+	_, net, err := net.ParseCIDR(subnetStr)
 	if err != nil {
 		fmt.Println("Invalid subnet (" + subnetStr + ") format. Please use CIDR notation (e.g., 10.1.0.0/24).")
 		return
 	}
-	subnet := string(network.String())
+	subnet := string(net.String())
 	fmt.Println("Using network:", subnet)
 
-	params := NetworkParams{
+	var params network.NetworkParams
+
+	params = network.NetworkParams{
 		Name:   name,
 		VLANID: vlanID,
 		Subnet: subnet,
 	}
 
-	commands, err := GenerateCommands(params)
+	commands, err := frontend.GenerateCommands(params)
 
 	fmt.Println("\n--- Generated Commands ---")
 	fmt.Printf("Firewall:\n%s\n\n", commands["firewall"])

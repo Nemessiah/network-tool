@@ -1,10 +1,12 @@
-package main
+package switchcommands
 
 import (
 	"fmt"
+
+	"github.com/nemessiah/network-tool/network"
 )
 
-func RenderSwitchIOS(vlan NetworkParams) (string, error) {
+func RenderSwitchIOS(vlan network.NetworkParams) (string, error) {
 	var err error
 
 	output := fmt.Sprintf(

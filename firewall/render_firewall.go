@@ -1,10 +1,12 @@
-package main
+package firewall
 
 import (
 	"fmt"
+
+	"github.com/nemessiah/network-tool/network"
 )
 
-func RenderFirewallPaloAlto(Interface NetworkParams) (string, error) {
+func RenderFirewallPaloAlto(Interface network.NetworkParams) (string, error) {
 	var err error
 
 	output := fmt.Sprintf(
