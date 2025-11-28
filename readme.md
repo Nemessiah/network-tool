@@ -8,7 +8,6 @@ Required inputs
 required:
 - General
     - VLAN
-    - Managing Site
     - Site
     - CIDR
 - Program
@@ -18,16 +17,25 @@ required:
         - Wan
         - Transit
         - DMZ
-        - user
+        - server
+        - device
 - Switch
     - trunk ports
     - Access ports
 - Firewall
     - interface name
+    - interface settings
     - vrf
     - user id
+    - DHCP Relay
+    - 
 - DHCP
     - range
     - lease time
 - Netbox
     - existing IDs
+    - Add new
+        - networks
+        - interfaces
+Nice two have:
+
