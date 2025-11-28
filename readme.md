@@ -37,5 +37,5 @@ required:
     - Add new
         - networks
         - interfaces
-Nice two have:
+Nice too have:
 
