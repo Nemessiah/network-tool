@@ -10,6 +10,7 @@ import (
 
 	"github.com/nemessiah/network-tool/firewall"
 	"github.com/nemessiah/network-tool/frontend"
+	"github.com/nemessiah/network-tool/internal"
 	"github.com/nemessiah/network-tool/network"
 )
 
@@ -59,6 +60,9 @@ func SelectInterface(Type string, Vlan int) (string, error) {
 }
 
 func main() {
+	var err error
+
+	Config, err := internal.LoadConfig(configPath)
 
 	name := Prompt[string]("Enter VLAN Name: ")
 
@@ -121,7 +125,6 @@ func main() {
 	}
 
 	var Interface string
-	var err error
 
 	Interface, err = SelectInterface(networkType, vlanID)
 
