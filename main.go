@@ -1,15 +1,14 @@
 package main
 
 import (
-	"bufio" // for reading text input
-	"fmt"   // for printing and formatting
+	"bufio"
+	"fmt"
+	"log"
 	"net"
-	"os"      // gives access to stdin/stdout
-	"strconv" // convert strings to numbers
-	"strings" // string trimming/splitting
+	"os"
+	"strconv"
+	"strings"
 
-	"github.com/nemessiah/network-tool/firewall"
-	"github.com/nemessiah/network-tool/frontend"
 	"github.com/nemessiah/network-tool/internal"
 	"github.com/nemessiah/network-tool/network"
 )
@@ -39,30 +38,23 @@ func Prompt[T any](prompt string) T {
 	}
 }
 
-func SelectInterface(Type string, Vlan int) (string, error) {
-	var output string
-	var err error
-
-	switch Type {
-	case "WAN":
-		output = fmt.Sprintf("ae1.%d", Vlan)
-	case "Internal":
-		output = fmt.Sprintf("ae2.%d", Vlan)
-	case "Guest":
-		output = fmt.Sprintf("ae3.%d", Vlan)
-	case "DMZ":
-		output = fmt.Sprintf("ae4.%d", Vlan)
-	default:
-		return "", fmt.Errorf("invalid NetworkType: %s", Type)
-	}
-
-	return output, err
-}
-
 func main() {
 	var err error
+	var visited map[string]bool
 
-	Config, err := internal.LoadConfig(configPath)
+	configPath, err := internal.ConfigCheck()
+
+	if err != nil {
+		log.Fatalf("Unable to find, or create config: %v", err)
+		return
+	}
+
+	Config, err := internal.LoadConfig(configPath, visited)
+
+	if err := internal.ConfigValidation(&Config); err != nil {
+		log.Fatalf("config validation failed: %v", err)
+		return
+	}
 
 	name := Prompt[string]("Enter VLAN Name: ")
 
@@ -126,40 +118,11 @@ func main() {
 
 	var Interface string
 
-	Interface, err = SelectInterface(networkType, vlanID)
+	Interface, err = network.SelectInterface(networkType, vlanID)
 
 	if err != nil {
 		fmt.Println("Error selecting interface:", err)
 		return
 	}
 
-	var networkParams network.NetworkParams
-
-	networkParams = network.NetworkParams{
-		Name:   name,
-		VLANID: vlanID,
-		Subnet: subnet,
-	}
-
-	var firewallParams firewall.InterfaceConfig
-
-	firewallParams = firewall.InterfaceConfig{
-		Interface:   Interface,
-		Network:     networkParams,
-		NetworkType: networkType,
-		Description: description,
-		Zone:        zone,
-	}
-
-	commands, err := frontend.GenerateCommands(firewallParams)
-
-	if err != nil {
-		fmt.Println("Error generating commands:", err)
-		return
-	}
-
-	fmt.Println("\n--- Generated Commands ---")
-	fmt.Printf("Firewall:\n%s\n\n", commands["firewall"])
-	fmt.Printf("Switch:\n%s\n\n", commands["switch"])
-	fmt.Printf("NetBox JSON:\n%s\n", commands["netbox"])
 }

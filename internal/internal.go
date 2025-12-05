@@ -20,8 +20,13 @@ type Config struct {
 }
 
 type Template struct {
-	Devicetype []string `yaml:"devicetype"`
-	Keys       []string `yaml:"keys"`
+	Devicetype []string
+	Keys       []string
+}
+
+var defaultTemplate = Template{
+	Devicetype: []string{"firewall", "switch", "api", "dhcp"},
+	Keys:       []string{"interface", "ipaddress", "vlanid", "vlanname", "zone", "cidr", "mask"},
 }
 
 type Deviceinfo struct {
@@ -31,13 +36,27 @@ type Deviceinfo struct {
 
 type Fullconfig struct {
 	Config   Config                `yaml:"config"`
-	Template Template              `yaml:"template"`
+	Template Template              `yaml:"-"`
 	Vendors  map[string]Deviceinfo `yaml:",inline"`
 }
 
-func LoadConfig(file string) (Fullconfig, error) {
+func LoadConfig(file string, visited map[string]bool) (Fullconfig, error) {
 	var cfg Fullconfig
 
+	abs, err := filepath.Abs(file)
+	if err != nil {
+		return cfg, err
+	}
+	file = abs
+
+	// If we've seen this file already, skip it
+	if visited[file] {
+		log.Printf("WARN: skipping already-loaded config %s", file)
+		return cfg, nil
+	}
+	visited[file] = true
+
+	// Load file from OS
 	raw, err := os.ReadFile(file)
 	if err != nil {
 		return cfg, err
@@ -54,7 +73,8 @@ func LoadConfig(file string) (Fullconfig, error) {
 		for _, path := range cfg.Config.Additionalfiles {
 
 			path = filepath.Join(filepath.Dir(file), path)
-			additionalCfg, err := LoadConfig(path)
+
+			additionalCfg, err := LoadConfig(path, visited)
 			if err != nil {
 				return cfg, fmt.Errorf("failed to load additional config %q: %w", path, err)
 			}
@@ -64,6 +84,12 @@ func LoadConfig(file string) (Fullconfig, error) {
 				cfg.Vendors = make(map[string]Deviceinfo)
 			}
 			for k, v := range additionalCfg.Vendors {
+				if _, exists := cfg.Vendors[k]; exists {
+					log.Printf("WARN: vendor %q already defined, overriding with values from %s",
+						k,
+						path,
+					)
+				}
 				cfg.Vendors[k] = v
 			}
 		}
@@ -101,15 +127,15 @@ func ConfigCheck() (string, error) {
 }
 
 // ConfigValidation validates the Fullconfig and cleans invalid operations.
-func ConfigValidation(fullconfig *Fullconfig) (bool, error) {
+func ConfigValidation(fullconfig *Fullconfig) error {
 	placeholderRe := regexp.MustCompile(`\{\{(\w+)\}\}`)
 	crudOps := []string{"create", "read", "update", "delete"}
 
 	for vendorName, vendor := range fullconfig.Vendors {
 
 		// Validate devicetype
-		if !slices.Contains(fullconfig.Template.Devicetype, vendor.Devicetype) {
-			return false, fmt.Errorf(
+		if !slices.Contains(defaultTemplate.Devicetype, vendor.Devicetype) {
+			return fmt.Errorf(
 				"vendor %q has invalid devicetype %q",
 				vendorName, vendor.Devicetype,
 			)
@@ -146,8 +172,8 @@ func ConfigValidation(fullconfig *Fullconfig) (bool, error) {
 					matches := placeholderRe.FindAllStringSubmatch(cmd, -1)
 					for _, match := range matches {
 						key := match[1]
-						if !slices.Contains(fullconfig.Template.Keys, key) {
-							return false, fmt.Errorf(
+						if !slices.Contains(defaultTemplate.Keys, key) {
+							return fmt.Errorf(
 								"vendor %q item %q operation %q contains invalid placeholder key %q in command: %q",
 								vendorName, itemName, opName, key, cmd,
 							)
@@ -164,5 +190,19 @@ func ConfigValidation(fullconfig *Fullconfig) (bool, error) {
 		fullconfig.Vendors[vendorName] = vendor
 	}
 
-	return true, nil
+	return nil
+}
+
+func UsedDeviceTypes(cfg Fullconfig) ([]string, error) {
+	unique := make(map[string]bool)
+	for _, vendor := range cfg.Vendors {
+		unique[vendor.Devicetype] = true
+	}
+
+	var usedTypes []string
+	for dt := range unique {
+		usedTypes = append(usedTypes, dt)
+	}
+
+	return usedTypes, nil
 }

@@ -1,37 +1,32 @@
 config:
   # List of additional directories to search for config and template files.
   additionalfiles: []
-
-# These values define the schema and are NOT intended to be changed by end users.
-template:
-  # Valid types of devices.
-  devicetype:
-    - firewall
-    - switch
-    - api
-    - dhcp
-  # Valid replacement keys in commands.
-  keys:
-    - interface
-    - ipaddress
-    - vlanid
-    - vlanname
-    - zone
-    - cidr
-    - mask
+  configversion: "1.0.0"
 
 # ---------------------------------------------------------------------------
 # Vendor Sections
 # use the section below to define custom devices, or vendors for commands to output.
+# It is recommended to create vendors your own vendors in a seperate file specified in config.additionalfiles
 #
 # Each vendor definition contains:
-#   - A devicetype (must match one of the template.devicetype items)
+#   - A devicetype, one of:
+#     - firewall
+#     - switch
+#     - api
+#     - dhcp
 #   - A set of command groups, keyed by an item (e.g., interface, vlan, dhcprelay)
 #   - CRUD-style operations within each group (create, read, update, delete)
 #
 # Rules:
 #   - All CRUD operations must be arrays, even if only one command is defined.
-#   - All placeholder keys (e.g., {{interface}}, {{vlanid}}) will be replaced
+#   - Commands can have any number of keys. Key's must be of:
+#     - interface
+#     - ipaddress
+#     - vlanid
+#     - vlanname
+#     - zone
+#     - cidr
+#     - mask
 #     by the program at runtime with the coinciding input.
 #   - Placeholder keys must be surrounded by double curly braces: {{key}}
 #   - Command groups may only use the CRUD operation types:
@@ -39,6 +34,21 @@ template:
 #         read
 #         update
 #         delete
+# Example:
+#   paloalto:
+#     devicetype: firewall
+#     commands:
+#       interface:
+#         create:
+#           - set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}
+#           - set network interface aggregate-ethernet {{interface}} description {{vlanname}}
+#           - set zone {{zone}} network layer3 {{interface}}
+#         update:
+#           - set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}
+#           - set network interface aggregate-ethernet {{interface}} description {{vlanname}}
+#           - set zone {{zone}} network layer3 {{interface}}
+#       dhcprelay:
+#         create: []
 #
 # Any additional operation types will be ignored or result in validation failure.
 # ---------------------------------------------------------------------------
