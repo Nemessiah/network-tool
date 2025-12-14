@@ -3,6 +3,8 @@ package commands
 import (
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
 type Network struct {
@@ -19,48 +21,89 @@ type NetworkParams struct {
 	Zone        string  `json:"zone"`
 }
 
-func MakeStructMap(input NetworkParams) (map[string]string, error) {
-	value := reflect.ValueOf(input)
-	if value.Kind() == reflect.Ptr {
-		value = value.Elem()
+func reflectParams(input reflect.Value) (map[string]string, error) {
+	var valStr string
+	output := make(map[string]string)
+
+	if input.Kind() == reflect.Ptr {
+		input = input.Elem()
 	}
-	if !(value.Kind() == reflect.Struct) {
-		return _, fmt.Errorf("Error: input is not a struct!")
+	if !(input.Kind() == reflect.Struct) {
+		return nil, fmt.Errorf("input is not a struct")
 	}
-	valueType := value.Type()
-	for i := 0; i < v.NumField(); i++ {
-		fieldValue := value.Field(i)
+	valueType := input.Type()
+	for i := 0; i < input.NumField(); i++ {
+		fieldValue := input.Field(i)
 		fieldType := valueType.Field(i)
 
-		switch fieldValue.Kind() {
-		case int:
-			val, err := strconv.itoa(fieldValue.int())
-		case string:
-			val := fieldValue.String()
-		default:
-			panic("unsupported type")
+		// Determine placeholder name from json tag
+		tag := fieldType.Tag.Get("json")
+		if tag == "" {
+			// No json tag, skip
+			continue
 		}
-	}
 
+		// Handle nested structs by recursion
+		if fieldValue.Kind() == reflect.Struct {
+			nested, err := reflectParams(fieldValue)
+			if err != nil {
+				return nil, err
+			}
+			// Merge nested results into out
+			for k, v := range nested {
+				output[k] = v
+			}
+			continue
+		}
+
+		switch fieldValue.Kind() {
+		case reflect.String:
+			valStr = fieldValue.String()
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			valStr = strconv.FormatInt(fieldValue.Int(), 10)
+		case reflect.Bool:
+			if fieldValue.Bool() {
+				valStr = "true"
+			} else {
+				valStr = "false"
+			}
+		default:
+			// For now, ignore unsupported kinds rather than panic
+			continue
+
+		}
+		output[tag] = valStr
+	}
+	return output, nil
 }
 
-// func ReplaceKeys (input NetworkParams, command string) (string, error){
-// 	var output string
-// 	var err error
+func MakeStructMap(input NetworkParams) (map[string]string, error) {
+	value := reflect.ValueOf(input)
+	output, err := reflectParams(value)
+	if err != nil {
+		return nil, fmt.Errorf("unable to reflect input: %s", err)
+	}
+	return output, nil
+}
 
-// 	output = command
-// 	// half psuedo code follows
-// 	for key, value := input {
-// 		regkey := fmt.sprintf("{{%s}}",key)
-// 		&output, err = regexp.ReplaceString(command, regkey)
+func ReplaceKeys(keymap map[string]string, command string) (string, error) {
+	var match bool
+	var output string
 
-// 		if !err == nil  {
-// 			return _, fmt.Errorf(
-// 				"Error replacing %s in %s:%s"
-// 				key, command, err
-// 			)
-// 		}
+	output = command
 
-// 	}
-// 	return output, nil
-// }
+	for key, value := range keymap {
+		regkey := fmt.Sprintf("{{%s}}", key)
+		output = strings.ReplaceAll(output, regkey, value)
+		match = strings.Contains(output, regkey)
+		if match {
+			return "", fmt.Errorf(
+				"Error replacing %s in %s",
+				key, command,
+			)
+		}
+
+	}
+
+	return output, nil
+}
