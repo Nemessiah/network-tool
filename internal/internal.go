@@ -40,6 +40,8 @@ type Fullconfig struct {
 	Vendors  map[string]Deviceinfo `yaml:",inline"`
 }
 
+var Reg = regexp.MustCompile(`\{\{([\w-]+)\}\}`)
+
 func LoadConfig(file string, visited map[string]bool) (Fullconfig, error) {
 	var cfg Fullconfig
 
