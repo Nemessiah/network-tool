@@ -19,7 +19,11 @@ Current Goals:
 - [x] Automatic replacement of key's in commands > 0.4
 - [] Tests for all functions > 0.5
 - [] Generate commands via CLI input. > 1.0
-- [] Auto generate input based on internal standards. > 1.1
+- [] Multiple input methods > 1.1
+    - [] json
+    - [] cli paramaters
+    - [] interactive (part of 1.0)
+- [] Auto generate input based on internal standards. > 1.2
 - [] Query Netbox for existing network, and device information. > 1.3
 - [] Authentication. 2.0-beta
     - [] API token access
