@@ -3,8 +3,11 @@ package commands
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/nemessiah/network-tool/internal"
 )
 
 type Network struct {
@@ -87,22 +90,35 @@ func MakeStructMap(input NetworkParams) (map[string]string, error) {
 }
 
 func ReplaceKeys(keymap map[string]string, command string) (string, error) {
-	var match bool
 	var output string
+	var placeholder string
 
 	output = command
 
 	for key, value := range keymap {
-		regkey := fmt.Sprintf("{{%s}}", key)
-		output = strings.ReplaceAll(output, regkey, value)
-		match = strings.Contains(output, regkey)
-		if match {
-			return "", fmt.Errorf(
-				"Error replacing %s in %s",
-				key, command,
-			)
+		if internal.Reg.MatchString(value) {
+			return "", fmt.Errorf("Key(%s) contains a placeholder value. Value: %s", key, value)
 		}
 
+		placeholder = fmt.Sprintf("{{%s}}", key)
+		output = strings.ReplaceAll(output, placeholder, value)
+	}
+
+	if internal.Reg.MatchString(output) {
+		var keys []string
+		keyMap := internal.Reg.FindAllStringSubmatch(output, -1)
+		for _, value := range keyMap {
+			if !slices.Contains(keys, value[1]) {
+				keys = append(keys, value[1])
+			}
+		}
+		return "", fmt.Errorf(
+			"Command contains unresolved placeholder(s) after replacement.\n"+
+				"    Keys:%s \n"+
+				"    Command: %s",
+			strings.Join(keys, ", "),
+			output,
+		)
 	}
 
 	return output, nil
