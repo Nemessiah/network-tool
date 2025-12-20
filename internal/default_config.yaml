@@ -5,21 +5,67 @@ config:
 
 # ---------------------------------------------------------------------------
 # Vendor Sections
-# use the section below to define custom devices, or vendors for commands to output.
-# It is recommended to create vendors your own vendors in a seperate file specified in config.additionalfiles
 #
-# Each vendor definition contains:
-#   - A devicetype, one of:
+# This section defines vendors and the commands that this program will output.
+# Users can create their own vendors here or in separate files referenced by
+# `config.additionalfiles`.
+#
+# If the same vendor name is defined in multiple files, the LAST definition
+# loaded will be used.
+#
+# ---------------------------------------------------------------------------
+# Vendor structure (REQUIRED):
+#
+# <vendor_name>:
+#   devicetype: <type>
+#   commands:
+#     - feature: <feature_name>
+#       actions:
+#         <action>: [ <command>, <command>, ... ]
+#
+# ---------------------------------------------------------------------------
+# Vendor fields:
+#
+# vendor_name (REQUIRED)
+#   - The name of the vendor (e.g. paloalto, cisco, juniper)
+#   - Vendor order does NOT matter
+#
+# devicetype (REQUIRED)
+#   Must be one of:
 #     - firewall
 #     - switch
 #     - api
 #     - dhcp
-#   - A set of command groups, keyed by an item (e.g., interface, vlan, dhcprelay)
-#   - CRUD-style operations within each group (create, read, update, delete)
 #
-# Rules:
-#   - All CRUD operations must be arrays, even if only one command is defined.
-#   - Commands can have any number of keys. Key's must be of:
+# commands (REQUIRED)
+#   - An ORDERED list of command features
+#   - Feature order is preserved exactly as written and determines the order
+#     in which commands are output
+#
+# feature (REQUIRED)
+#   - Logical grouping of commands (e.g. interface, vlan, dhcprelay)
+#
+# actions (REQUIRED)
+#   - CRUD-style actions supported by this feature
+#   - Only ONE action is selected per program run
+#
+# Allowed actions:
+#     - create
+#     - read
+#     - update
+#     - delete
+#
+# Each action must contain:
+#   - A list of one or more command strings
+#   - Lists must be used even if only one command is defined
+#
+# ---------------------------------------------------------------------------
+# Command placeholders:
+#
+# Commands may contain placeholder keys that are replaced at runtime using
+# user-provided input.
+#
+# Allowed placeholder keys:
 #     - interface
 #     - ipaddress
 #     - vlanid
@@ -27,18 +73,28 @@ config:
 #     - zone
 #     - cidr
 #     - mask
-#     by the program at runtime with the coinciding input.
-#   - Placeholder keys must be surrounded by double curly braces: {{key}}
-#   - Command groups may only use the CRUD operation types:
-#         create
-#         read
-#         update
-#         delete
+#
+# Placeholder format:
+#     {{key}}
+#
 # Example:
-#   paloalto:
-#     devicetype: firewall
-#     commands:
-#       interface:
+#     set interface {{interface}} ip {{ipaddress}}
+#
+# ---------------------------------------------------------------------------
+# Validation behavior:
+#
+# - Invalid CRUD action names are ignored with a warning
+# - Invalid placeholder keys will cause configuration validation to FAIL
+# - Features with no valid actions are ignored
+#
+# ---------------------------------------------------------------------------
+# Example:
+#
+# paloalto:
+#   devicetype: firewall
+#   commands:
+#     - feature: interface
+#       actions:
 #         create:
 #           - set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}
 #           - set network interface aggregate-ethernet {{interface}} description {{vlanname}}
@@ -47,39 +103,44 @@ config:
 #           - set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}
 #           - set network interface aggregate-ethernet {{interface}} description {{vlanname}}
 #           - set zone {{zone}} network layer3 {{interface}}
-#       dhcprelay:
+#
+#     - feature: dhcprelay
+#       actions:
 #         create: []
 #
-# Any additional operation types will be ignored or result in validation failure.
 # ---------------------------------------------------------------------------
+
 
 
 paloalto:
   devicetype: firewall
   commands:
-    interface:
-      create:
-        - set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}
-        - set network interface aggregate-ethernet {{interface}} description {{vlanname}}
-        - set zone {{zone}} network layer3 {{interface}}
-      update:
-        - set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}
-        - set network interface aggregate-ethernet {{interface}} description {{vlanname}}
-        - set zone {{zone}} network layer3 {{interface}}
-    dhcprelay:
-      create: []
+    - feature: interface
+      actions:
+        create:
+          - set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}
+          - set network interface aggregate-ethernet {{interface}} description {{vlanname}}
+          - set zone {{zone}} network layer3 {{interface}}
+        update:
+          - set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}
+          - set network interface aggregate-ethernet {{interface}} description {{vlanname}}
+          - set zone {{zone}} network layer3 {{interface}}
+    - feature: dhcprelay
+      actions: 
+        create: []
 
 cisco:
   devicetype: switch
   commands:
-    vlan:
-      create:
-        - vlan {{vlanid}}
-        - name {{vlanname}}
-      read:
-        - show vlan id {{vlanid}}
-      update:
-        - vlan {{vlanid}}
-        - name {{vlanname}}
-      delete:
-        - no vlan {{vlanid}}
+    - feature: vlan
+      actions: 
+        create:
+          - vlan {{vlanid}}
+          - name {{vlanname}}
+        read:
+          - show vlan id {{vlanid}}
+        update:
+          - vlan {{vlanid}}
+          - name {{vlanname}}
+        delete:
+          - no vlan {{vlanid}}

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -134,6 +135,8 @@ func ConfigCheck() (string, error) {
 }
 
 // ConfigValidation validates the Fullconfig and cleans invalid operations.
+// ConfigValidation validates the Fullconfig and cleans invalid operations.
+// It preserves feature order exactly as defined in YAML.
 func ConfigValidation(fullconfig *Fullconfig) error {
 	placeholderRe := regexp.MustCompile(`\{\{(\w+)\}\}`)
 	crudOps := []string{"create", "read", "update", "delete"}
@@ -142,58 +145,68 @@ func ConfigValidation(fullconfig *Fullconfig) error {
 
 		// Validate devicetype
 		if !slices.Contains(defaultTemplate.Devicetype, vendor.Devicetype) {
-			return fmt.Errorf(
-				"vendor %q has invalid devicetype %q",
-				vendorName, vendor.Devicetype,
-			)
+			return fmt.Errorf("vendor %q has invalid devicetype %q", vendorName, vendor.Devicetype)
 		}
 
-		// Make a new map to store cleaned commands
-		newCommands := make(map[string]map[string][]string)
+		if vendor.Commands == nil {
+			// Nothing to validate for this vendor
+			continue
+		}
 
-		for itemName, ops := range vendor.Commands {
+		// New slice to store cleaned commands (preserving order)
+		newFeatures := make([]FeatureCommands, 0, len(vendor.Commands))
+
+		for idx, feature := range vendor.Commands {
+			featureName := strings.TrimSpace(feature.Feature)
+			if featureName == "" {
+				return fmt.Errorf("vendor %q has a commands entry at index %d with empty feature name", vendorName, idx)
+			}
+
 			// Drop invalid CRUD operations
-			cleanOps := make(map[string][]string)
-			for opName, cmds := range ops {
+			cleanActions := make(map[string][]string)
+			for opName, cmds := range feature.Actions {
 				if slices.Contains(crudOps, opName) {
-					cleanOps[opName] = cmds
+					cleanActions[opName] = cmds
 				} else {
 					log.Printf(
-						"warning: vendor %q item %q has invalid operation %q; ignoring",
-						vendorName, itemName, opName,
+						"warning: vendor %q feature %q has invalid operation %q; ignoring",
+						vendorName, featureName, opName,
 					)
 				}
 			}
 
-			if len(cleanOps) == 0 {
+			if len(cleanActions) == 0 {
 				log.Printf(
-					"warning: vendor %q item %q has no valid CRUD operations; ignoring item",
-					vendorName, itemName,
+					"warning: vendor %q feature %q has no valid CRUD operations; ignoring feature",
+					vendorName, featureName,
 				)
 				continue
 			}
 
 			// Validate placeholders
-			for opName, cmds := range cleanOps {
+			for opName, cmds := range cleanActions {
 				for _, cmd := range cmds {
 					matches := placeholderRe.FindAllStringSubmatch(cmd, -1)
 					for _, match := range matches {
 						key := match[1]
 						if !slices.Contains(defaultTemplate.Keys, key) {
 							return fmt.Errorf(
-								"vendor %q item %q operation %q contains invalid placeholder key %q in command: %q",
-								vendorName, itemName, opName, key, cmd,
+								"vendor %q feature %q operation %q contains invalid placeholder key %q in command: %q",
+								vendorName, featureName, opName, key, cmd,
 							)
 						}
 					}
 				}
 			}
 
-			newCommands[itemName] = cleanOps
+			// Write cleaned feature back into ordered list
+			feature.Feature = featureName
+			feature.Actions = cleanActions
+			newFeatures = append(newFeatures, feature)
 		}
 
-		// Write back cleaned commands
-		vendor.Commands = newCommands
+		// Write back cleaned commands, preserving feature order
+		vendor.Commands = newFeatures
 		fullconfig.Vendors[vendorName] = vendor
 	}
 
