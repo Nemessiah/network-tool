@@ -29,9 +29,14 @@ var defaultTemplate = Template{
 	Keys:       []string{"interface", "ipaddress", "vlanid", "vlanname", "zone", "cidr", "mask"},
 }
 
+type FeatureCommands struct {
+	Feature string              `yaml:"feature"`
+	Actions map[string][]string `yaml:"actions"`
+}
+
 type Deviceinfo struct {
-	Devicetype string                         `yaml:"devicetype"`
-	Commands   map[string]map[string][]string `yaml:"commands"`
+	Devicetype string            `yaml:"devicetype"`
+	Commands   []FeatureCommands `yaml:"commands"` // ORDERED
 }
 
 type Fullconfig struct {
