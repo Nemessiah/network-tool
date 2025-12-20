@@ -123,3 +123,29 @@ func ReplaceKeys(keymap map[string]string, command string) (string, error) {
 
 	return output, nil
 }
+
+func ExtractVendorCommandsForAction(cfg internal.Fullconfig, action string) map[string][]string {
+	output := make(map[string][]string)
+
+	for vendor, device := range cfg.Vendors {
+		cmds := make([]string, 0)
+
+		if device.Commands == nil {
+			continue
+		}
+		for _, feature := range device.Commands {
+			if feature.Actions == nil {
+				continue
+			}
+			slice := feature.Actions[action]
+			if len(slice) > 0 {
+				cmds = append(cmds, slice...)
+			}
+		}
+		if len(cmds) > 0 {
+			output[vendor] = cmds
+		}
+
+	}
+	return output
+}
