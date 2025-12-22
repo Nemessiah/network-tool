@@ -172,11 +172,12 @@ func main() {
 	}
 
 	for vendor, commands := range outputCommands {
-		fmt.Printf("commands for: %s", vendor)
+		fmt.Println("commands for:", vendor)
 		for _, command := range commands {
-			fmt.Println(command)
+			fmt.Println("    ", command)
 		}
-
+		fmt.Println()
+		fmt.Println()
 	}
 
 }
