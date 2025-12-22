@@ -63,6 +63,13 @@ func main() {
 		break
 	}
 
+	var ipaddress string
+	ipaddress, err = network.GetFirstUsableCIDR(subnet)
+
+	if err != nil {
+		fmt.Printf("Error locating first usable ip: %s", err)
+	}
+
 	// Network type validation
 	var networkType string
 	validTypes := map[string]bool{"WAN": true, "Internal": true, "Guest": true, "DMZ": true}
@@ -130,9 +137,9 @@ func main() {
 	extractedCommands = commands.ExtractVendorCommandsForAction(Config, action)
 
 	network := commands.Network{
-		Name:   name,
-		Vlanid: vlanID,
-		Subnet: subnet,
+		VlanName: name,
+		Vlanid:   vlanID,
+		Subnet:   subnet,
 	}
 
 	inputs := commands.NetworkParams{
@@ -141,6 +148,7 @@ func main() {
 		NetworkType: networkType,
 		Description: description,
 		Zone:        zone,
+		IpAddress:   ipaddress,
 	}
 
 	outputCommands := make(map[string][]string)

@@ -11,9 +11,9 @@ import (
 )
 
 type Network struct {
-	Name   string `json:"name"`
-	Vlanid int    `json:"vlanid"`
-	Subnet string `json:"subnet"`
+	VlanName string `json:"vlanname"`
+	Vlanid   int    `json:"vlanid"`
+	Subnet   string `json:"subnet"`
 }
 
 type NetworkParams struct {
@@ -22,6 +22,7 @@ type NetworkParams struct {
 	NetworkType string  `json:"networktype"`
 	Description string  `json:"description"`
 	Zone        string  `json:"zone"`
+	IpAddress   string
 }
 
 func reflectParams(input reflect.Value) (map[string]string, error) {
