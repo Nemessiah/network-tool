@@ -25,7 +25,7 @@ type Template struct {
 	Keys       []string
 }
 
-var defaultTemplate = Template{
+var DefaultTemplate = Template{
 	Devicetype: []string{"firewall", "switch", "api", "dhcp"},
 	Keys:       []string{"interface", "ipaddress", "vlanid", "vlanname", "zone", "cidr", "mask"},
 }
@@ -144,7 +144,7 @@ func ConfigValidation(fullconfig *Fullconfig) error {
 	for vendorName, vendor := range fullconfig.Vendors {
 
 		// Validate devicetype
-		if !slices.Contains(defaultTemplate.Devicetype, vendor.Devicetype) {
+		if !slices.Contains(DefaultTemplate.Devicetype, vendor.Devicetype) {
 			return fmt.Errorf("vendor %q has invalid devicetype %q", vendorName, vendor.Devicetype)
 		}
 
@@ -189,7 +189,7 @@ func ConfigValidation(fullconfig *Fullconfig) error {
 					matches := placeholderRe.FindAllStringSubmatch(cmd, -1)
 					for _, match := range matches {
 						key := match[1]
-						if !slices.Contains(defaultTemplate.Keys, key) {
+						if !slices.Contains(DefaultTemplate.Keys, key) {
 							return fmt.Errorf(
 								"vendor %q feature %q operation %q contains invalid placeholder key %q in command: %q",
 								vendorName, featureName, opName, key, cmd,
