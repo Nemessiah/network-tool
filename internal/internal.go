@@ -107,7 +107,6 @@ func LoadConfig(file string, visited map[string]bool) (Fullconfig, error) {
 	return cfg, nil
 }
 
-// check if a configuration exists, and create it if not
 func ConfigCheck() (string, error) {
 
 	var err error
@@ -135,9 +134,6 @@ func ConfigCheck() (string, error) {
 	return configPath, nil
 }
 
-// ConfigValidation validates the Fullconfig and cleans invalid operations.
-// ConfigValidation validates the Fullconfig and cleans invalid operations.
-// It preserves feature order exactly as defined in YAML.
 func ConfigValidation(fullconfig *Fullconfig) error {
 	placeholderRe := regexp.MustCompile(`\{\{(\w+)\}\}`)
 	crudOps := []string{"create", "read", "update", "delete"}
@@ -150,11 +146,9 @@ func ConfigValidation(fullconfig *Fullconfig) error {
 		}
 
 		if vendor.Commands == nil {
-			// Nothing to validate for this vendor
 			continue
 		}
 
-		// New slice to store cleaned commands (preserving order)
 		newFeatures := make([]FeatureCommands, 0, len(vendor.Commands))
 
 		for idx, feature := range vendor.Commands {
@@ -200,13 +194,11 @@ func ConfigValidation(fullconfig *Fullconfig) error {
 				}
 			}
 
-			// Write cleaned feature back into ordered list
 			feature.Feature = featureName
 			feature.Actions = cleanActions
 			newFeatures = append(newFeatures, feature)
 		}
 
-		// Write back cleaned commands, preserving feature order
 		vendor.Commands = newFeatures
 		fullconfig.Vendors[vendorName] = vendor
 	}
