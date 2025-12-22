@@ -22,7 +22,7 @@ type NetworkParams struct {
 	NetworkType string  `json:"networktype"`
 	Description string  `json:"description"`
 	Zone        string  `json:"zone"`
-	IpAddress   string
+	IpAddress   string  `json:"ipaddress"`
 }
 
 func reflectParams(input reflect.Value) (map[string]string, error) {
