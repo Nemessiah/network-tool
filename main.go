@@ -177,7 +177,6 @@ func main() {
 			fmt.Println("    ", command)
 		}
 		fmt.Println()
-		fmt.Println()
 	}
 
 }
