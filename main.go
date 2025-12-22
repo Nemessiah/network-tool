@@ -152,7 +152,6 @@ func main() {
 	}
 
 	outputCommands := make(map[string][]string)
-	var replacedCommands []string
 
 	reflectedinput, err := commands.MakeStructMap(inputs)
 	if err != nil {
@@ -160,6 +159,7 @@ func main() {
 	}
 
 	for vendor, commandArray := range extractedCommands {
+		replacedCommands := make([]string, 0, len(commandArray))
 		for _, command := range commandArray {
 			temp, err := commands.ReplaceKeys(reflectedinput, command)
 
