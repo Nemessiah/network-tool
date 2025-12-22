@@ -1,42 +1,16 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"net"
-	"os"
-	"strconv"
 	"strings"
 
+	"github.com/nemessiah/network-tool/commands"
+	"github.com/nemessiah/network-tool/input/interactive"
 	"github.com/nemessiah/network-tool/internal"
 	"github.com/nemessiah/network-tool/network"
 )
-
-func Prompt[T any](prompt string) T {
-	reader := bufio.NewReader(os.Stdin)
-	var zero T // default zero value of type T
-
-	for {
-		fmt.Print(prompt)
-		input, _ := reader.ReadString('\n')
-		input = strings.TrimSpace(input)
-
-		switch any(zero).(type) {
-		case int:
-			val, err := strconv.Atoi(input)
-			if err != nil {
-				fmt.Println("Invalid entry, must be an integer.")
-				continue
-			}
-			return any(val).(T)
-		case string:
-			return any(input).(T)
-		default:
-			panic("unsupported type")
-		}
-	}
-}
 
 func main() {
 	var err error
@@ -51,17 +25,24 @@ func main() {
 
 	Config, err := internal.LoadConfig(configPath, visited)
 
-	if err := internal.ConfigValidation(&Config); err != nil {
+	if err != nil {
+		log.Fatalf("config load failed: %v", err)
+		return
+	}
+
+	err = internal.ConfigValidation(&Config)
+
+	if err != nil {
 		log.Fatalf("config validation failed: %v", err)
 		return
 	}
 
-	name := Prompt[string]("Enter VLAN Name: ")
+	name := interactive.Prompt[string]("Enter VLAN Name: ")
 
 	// VLAN ID with validation
 	var vlanID int
 	for {
-		vlanID = Prompt[int]("Enter VLAN ID (1-4094): ")
+		vlanID = interactive.Prompt[int]("Enter VLAN ID (1-4094): ")
 		if vlanID < 1 || vlanID > 4094 {
 			fmt.Println("Invalid VLAN ID, must be 1-4094.")
 			continue
@@ -72,7 +53,7 @@ func main() {
 	// Subnet input with CIDR validation
 	var subnet string
 	for {
-		subnetStr := Prompt[string]("Enter Subnet (e.g. 10.1.0.0/24): ")
+		subnetStr := interactive.Prompt[string]("Enter Subnet (e.g. 10.1.0.0/24): ")
 		_, netCIDR, err := net.ParseCIDR(subnetStr)
 		if err != nil {
 			fmt.Printf("Invalid subnet (%s) format. Please use CIDR notation (e.g., 10.1.0.0/24).\n", subnetStr)
@@ -86,7 +67,7 @@ func main() {
 	var networkType string
 	validTypes := map[string]bool{"WAN": true, "Internal": true, "Guest": true, "DMZ": true}
 	for {
-		networkType = Prompt[string]("Enter network type (WAN, Internal, Guest, DMZ): ")
+		networkType = interactive.Prompt[string]("Enter network type (WAN, Internal, Guest, DMZ): ")
 		if !validTypes[networkType] {
 			fmt.Println("Zone must be one of WAN, Internal, Guest, DMZ")
 			continue
@@ -97,7 +78,7 @@ func main() {
 	// Network description validation (max 50 characters)
 	var description string
 	for {
-		description = Prompt[string]("Enter network description: ")
+		description = interactive.Prompt[string]("Enter network description: ")
 		if len(description) > 50 {
 			fmt.Println("Max description length is 50 characters.")
 			continue
@@ -108,7 +89,7 @@ func main() {
 	// Zone input validation (max 50 characters)
 	var zone string
 	for {
-		zone = Prompt[string]("Enter zone: ")
+		zone = interactive.Prompt[string]("Enter zone: ")
 		if len(zone) > 50 {
 			fmt.Println("Max zone length is 50 characters.")
 			continue
@@ -116,6 +97,7 @@ func main() {
 		break
 	}
 
+	// interface selection, and validation
 	var Interface string
 
 	Interface, err = network.SelectInterface(networkType, vlanID)
@@ -123,6 +105,70 @@ func main() {
 	if err != nil {
 		fmt.Println("Error selecting interface:", err)
 		return
+	}
+
+	// action input and validation
+	var action string
+	validCrud := map[string]struct{}{
+		"create": {},
+		"read":   {},
+		"update": {},
+		"delete": {},
+	}
+
+	for {
+		action = interactive.Prompt[string]("Enter wanted CRUD action: ")
+		action = strings.ToLower(strings.TrimSpace(action))
+		if _, ok := validCrud[action]; ok {
+			fmt.Println("Valid action selected:", action)
+			break
+		}
+		fmt.Println("Invalid action. Please try again.")
+	}
+
+	var extractedCommands map[string][]string
+	extractedCommands = commands.ExtractVendorCommandsForAction(Config, action)
+
+	network := commands.Network{
+		Name:   name,
+		Vlanid: vlanID,
+		Subnet: subnet,
+	}
+
+	inputs := commands.NetworkParams{
+		Interface:   Interface,
+		Network:     network,
+		NetworkType: networkType,
+		Description: description,
+		Zone:        zone,
+	}
+
+	var outputCommands map[string][]string
+	var replacedCommands []string
+
+	reflectedinput, err := commands.MakeStructMap(inputs)
+	if err != nil {
+		fmt.Errorf("Error refecting input: %s", err)
+	}
+
+	for vendor, commandArray := range extractedCommands {
+		for _, command := range commandArray {
+			temp, err := commands.ReplaceKeys(reflectedinput, command)
+
+			if err != nil {
+				fmt.Errorf("Error replacing keys in a command: %s", err)
+			}
+			replacedCommands = append(replacedCommands, temp)
+		}
+		outputCommands[vendor] = replacedCommands
+	}
+
+	for vendor, commands := range outputCommands {
+		fmt.Println("commands for: %s", vendor)
+		for _, command := range commands {
+			fmt.Println(command)
+		}
+
 	}
 
 }
