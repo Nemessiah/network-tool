@@ -1,10 +1,10 @@
 # network-tool
 
-Network Tool is a CLI utility for generating vendor-specific network configuration commands based on structured input. It is intended to reduce manual command creation errors by validating input and automatically replacing variables in predefined command templates.
+Network Tool is a CLI utility for generating vendor-specific network configuration commands from structured input. It is designed to reduce manual command creation errors by validating input and automatically replacing variables in predefined command templates.
 
 The tool is currently at **version 0.5** and is under active development.
 
-The primary goal of this project is to provide a flexible, vendor-agnostic way to generate validated network configuration commands from structured input.
+The primary goal of this project is to learn **Go** and software development in general. In addition, it aims to provide a flexible, vendor-agnostic way to generate validated network configuration commands from structured input.
 
 ---
 
@@ -79,13 +79,12 @@ commands for: cisco
 ### Planned
 
 * [ ] Tests for all functions (v0.6)
-* [ ] Generate commands via CLI input (v1.0)
-* [ ] Multiple input methods (v1.1)
+* [ ] All v0 goals complete, and tested (v1.0)
+* [ ] additional input methods (v1.1)
 
   * [ ] JSON
   * [ ] CLI parameters
-  * [ ] Interactive (expanded)
-* [ ] Auto-generate input based on internal standards (v1.2)
+* [ ] Auto-generate input based on customizable standards (v1.2)
 * [ ] Query NetBox for existing network and device information (v1.3)
 * [ ] Authentication (v2.0-beta)
 
