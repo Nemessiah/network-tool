@@ -50,6 +50,7 @@ var Reg = regexp.MustCompile(`\{\{([\w-]+)\}\}`)
 
 func LoadConfig(file string, visited map[string]bool) (Fullconfig, error) {
 	var cfg Fullconfig
+	visited = make(map[string]bool)
 
 	abs, err := filepath.Abs(file)
 	if err != nil {
