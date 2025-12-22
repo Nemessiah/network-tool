@@ -143,12 +143,12 @@ func main() {
 		Zone:        zone,
 	}
 
-	var outputCommands map[string][]string
+	outputCommands := make(map[string][]string)
 	var replacedCommands []string
 
 	reflectedinput, err := commands.MakeStructMap(inputs)
 	if err != nil {
-		fmt.Errorf("Error refecting input: %s", err)
+		fmt.Printf("Error refecting input: %s", err)
 	}
 
 	for vendor, commandArray := range extractedCommands {
@@ -156,7 +156,7 @@ func main() {
 			temp, err := commands.ReplaceKeys(reflectedinput, command)
 
 			if err != nil {
-				fmt.Errorf("Error replacing keys in a command: %s", err)
+				fmt.Printf("Error replacing keys in a command: %s", err)
 			}
 			replacedCommands = append(replacedCommands, temp)
 		}
@@ -164,7 +164,7 @@ func main() {
 	}
 
 	for vendor, commands := range outputCommands {
-		fmt.Println("commands for: %s", vendor)
+		fmt.Printf("commands for: %s", vendor)
 		for _, command := range commands {
 			fmt.Println(command)
 		}
