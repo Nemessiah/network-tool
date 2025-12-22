@@ -85,7 +85,7 @@ func main() {
 	// Network description validation (max 50 characters)
 	var description string
 	for {
-		description = interactive.Prompt[string]("Enter network description: ")
+		description = interactive.Prompt[string]("Enter network description (50 Char max): ")
 		if len(description) > 50 {
 			fmt.Println("Max description length is 50 characters.")
 			continue
