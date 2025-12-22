@@ -251,7 +251,3 @@ set interface {{interface}} ip {{ipaddress}}
 This tool is primarily developed for internal use but is intended to remain open source and usable by general network engineers.
 
 ---
-
-## License
-
-Planned license: **GPLv2** (subject to confirmation).
