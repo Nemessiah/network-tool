@@ -127,7 +127,6 @@ func main() {
 		action = interactive.Prompt[string]("Enter wanted CRUD action: ")
 		action = strings.ToLower(strings.TrimSpace(action))
 		if _, ok := validCrud[action]; ok {
-			fmt.Println("Valid action selected:", action)
 			break
 		}
 		fmt.Println("Invalid action. Please try again.")
