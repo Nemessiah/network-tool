@@ -26,26 +26,10 @@ The primary goal of this project is to learn **Go** and software development in 
 
 ---
 
-## Required Inputs
-
-Depending on the command set being used, the following inputs may be required:
-
-* `interface`
-* `ipaddress`
-* `vlanid`
-* `vlanname`
-* `zone`
-* `cidr`
-* `mask`
-
-> Not all commands require all inputs. Missing required keys for a command will result in validation errors.
-
----
-
 ## How It Works
 
 1. Vendor-specific commands are defined using a customizable schema.
-2. The user is prompted for required input values (interactive mode only).
+2. The user is prompted for required input values.
 3. Inputs are validated against command requirements.
 4. Keys are replaced in command templates.
 5. Commands are output and grouped by vendor.
@@ -103,8 +87,6 @@ commands for: cisco
 
 ## Important Notes
 
-* This tool **does not execute commands** on devices.
-* It only generates validated command output.
 * NetBox integration is planned but **not implemented** as of v0.5.
 
 ⚠️ **Warning:** As of v0.5, the **default vendor command definitions have not been fully validated for real-world accuracy**. Generated commands should be reviewed and tested before use in production environments.
@@ -233,21 +215,3 @@ set interface {{interface}} ip {{ipaddress}}
 * Interactive mode only
 * The program prompts for **every allowed placeholder key** on each run
 * After selecting a CRUD action, **all commands** for that action are output per vendor
-
-> Planned improvements include prompting only for required keys and supporting non-interactive input methods.
-
----
-
-## Important Notes
-
-* This tool **does not execute commands** on devices.
-* It only generates validated command output.
-* NetBox integration is planned but **not implemented** as of v0.5.
-
----
-
-## Target Audience
-
-This tool is primarily developed for internal use but is intended to remain open source and usable by general network engineers.
-
----
