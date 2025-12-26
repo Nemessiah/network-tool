@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+var keyValueReg = regexp.MustCompile(`\{\{.*?\}\}`)
 
 func Prompt[T any](prompt string) T {
 	reader := bufio.NewReader(os.Stdin)
@@ -16,6 +19,11 @@ func Prompt[T any](prompt string) T {
 		fmt.Print(prompt)
 		input, _ := reader.ReadString('\n')
 		input = strings.TrimSpace(input)
+
+		if keyValueReg.MatchString(input) {
+			fmt.Println("Entry can not be match '{{*}}'")
+			continue
+		}
 
 		switch any(zero).(type) {
 		case int:

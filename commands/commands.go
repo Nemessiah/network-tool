@@ -97,10 +97,6 @@ func ReplaceKeys(keymap map[string]string, command string) (string, error) {
 	output = command
 
 	for key, value := range keymap {
-		if internal.Reg.MatchString(value) {
-			return "", fmt.Errorf("Key(%s) contains a placeholder value. Value: %s", key, value)
-		}
-
 		placeholder = fmt.Sprintf("{{%s}}", key)
 		output = strings.ReplaceAll(output, placeholder, value)
 	}
