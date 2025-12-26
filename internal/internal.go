@@ -41,9 +41,8 @@ type Deviceinfo struct {
 }
 
 type Fullconfig struct {
-	Config   Config                `yaml:"config"`
-	Template Template              `yaml:"-"`
-	Vendors  map[string]Deviceinfo `yaml:",inline"`
+	Config  Config                `yaml:"config"`
+	Vendors map[string]Deviceinfo `yaml:",inline"`
 }
 
 var Reg = regexp.MustCompile(`\{\{([\w-]+)\}\}`)
