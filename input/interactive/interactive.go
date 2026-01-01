@@ -3,7 +3,6 @@ package interactive
 import (
 	"bufio"
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,8 +10,8 @@ import (
 
 var keyValueReg = regexp.MustCompile(`\{\{.*?\}\}`)
 
-func Prompt[T any](prompt string) T {
-	reader := bufio.NewReader(os.Stdin)
+func Prompt[T any](r io.reader, prompt string) T {
+	reader := bufio.NewReader(r)
 	var zero T // default zero value of type T
 
 	for {

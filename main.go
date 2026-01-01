@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 
 	"github.com/nemessiah/network-tool/commands"
@@ -37,12 +38,12 @@ func main() {
 		return
 	}
 
-	name := interactive.Prompt[string]("Enter VLAN Name: ")
+	name := interactive.Prompt[string](os.Stdin, "Enter VLAN Name: ")
 
 	// VLAN ID with validation
 	var vlanID int
 	for {
-		vlanID = interactive.Prompt[int]("Enter VLAN ID (1-4094): ")
+		vlanID = interactive.Prompt[int](os.Stdin, "Enter VLAN ID (1-4094): ")
 		if vlanID < 1 || vlanID > 4094 {
 			fmt.Println("Invalid VLAN ID, must be 1-4094.")
 			continue
@@ -53,7 +54,7 @@ func main() {
 	// Subnet input with CIDR validation
 	var subnet string
 	for {
-		subnetStr := interactive.Prompt[string]("Enter Subnet (e.g. 10.1.0.0/24): ")
+		subnetStr := interactive.Prompt[string](os.Stdin, "Enter Subnet (e.g. 10.1.0.0/24): ")
 		_, netCIDR, err := net.ParseCIDR(subnetStr)
 		if err != nil {
 			fmt.Printf("Invalid subnet (%s) format. Please use CIDR notation (e.g., 10.1.0.0/24).\n", subnetStr)
@@ -74,7 +75,7 @@ func main() {
 	var networkType string
 	validTypes := map[string]bool{"WAN": true, "Internal": true, "Guest": true, "DMZ": true}
 	for {
-		networkType = interactive.Prompt[string]("Enter network type (WAN, Internal, Guest, DMZ): ")
+		networkType = interactive.Prompt[string](os.Stdin, "Enter network type (WAN, Internal, Guest, DMZ): ")
 		if !validTypes[networkType] {
 			fmt.Println("Zone must be one of WAN, Internal, Guest, DMZ")
 			continue
@@ -85,7 +86,7 @@ func main() {
 	// Network description validation (max 50 characters)
 	var description string
 	for {
-		description = interactive.Prompt[string]("Enter network description (50 Char max): ")
+		description = interactive.Prompt[string](os.Stdin, "Enter network description (50 Char max): ")
 		if len(description) > 50 {
 			fmt.Println("Max description length is 50 characters.")
 			continue
@@ -96,7 +97,7 @@ func main() {
 	// Zone input validation (max 50 characters)
 	var zone string
 	for {
-		zone = interactive.Prompt[string]("Enter zone: ")
+		zone = interactive.Prompt[string](os.Stdin, "Enter zone: ")
 		if len(zone) > 50 {
 			fmt.Println("Max zone length is 50 characters.")
 			continue
@@ -124,7 +125,7 @@ func main() {
 	}
 
 	for {
-		action = interactive.Prompt[string]("Enter wanted CRUD action: ")
+		action = interactive.Prompt[string](os.Stdin, "Enter wanted CRUD action: ")
 		action = strings.ToLower(strings.TrimSpace(action))
 		if _, ok := validCrud[action]; ok {
 			break
