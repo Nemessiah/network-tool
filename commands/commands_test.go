@@ -423,10 +423,12 @@ func TestExtractVendorCommandsForAction(t *testing.T) {
 
 			action: "create",
 			want: map[string][]string{
-				"create": {
+				"PaloAlto": {
 					"set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}",
 					"set network interface aggregate-ethernet {{interface}} description {{vlanname}}",
 					"set zone {{zone}} network layer3 {{interface}}",
+				},
+				"Cisco": {
 					"vlan {{vlanid}}",
 					"name {{vlanname}}",
 				},
@@ -490,9 +492,11 @@ func TestExtractVendorCommandsForAction(t *testing.T) {
 
 			action: "update",
 			want: map[string][]string{
-				"update": {
+				"PaloAlto": {
 					"set network interface aggregate-ethernet {{interface}} layer3 ip {{ipaddress}} vlan {{vlanid}}",
 					"set network interface aggregate-ethernet {{interface}} description {{vlanname}}",
+				},
+				"Cisco": {
 					"vlan {{vlanid}}",
 					"name {{vlanname}}",
 				},
@@ -556,7 +560,7 @@ func TestExtractVendorCommandsForAction(t *testing.T) {
 
 			action: "read",
 			want: map[string][]string{
-				"read": {
+				"Cisco": {
 					"show vlan id {{vlanid}}",
 				},
 			},
@@ -618,7 +622,7 @@ func TestExtractVendorCommandsForAction(t *testing.T) {
 			},
 			action: "delete",
 			want: map[string][]string{
-				"delete": {
+				"Cisco": {
 					"no vlan {{vlanid}}",
 				},
 			},
