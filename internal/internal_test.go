@@ -178,12 +178,51 @@ func TestLoadConfig(t *testing.T) {
 			wantWarn:   true,
 			warnString: "skipping already-loaded config",
 		},
+		{
+			name:       "duplicatevendoroverride",
+			configFile: "./testdata/overridevendor.yaml",
+			want: Fullconfig{
+				Config: Config{
+					Additionalfiles: []string{"basic_good.yaml"},
+					ConfigVersion:   "1.0.0",
+				},
+				Vendors: map[string]Deviceinfo{
+					"paloalto": {
+						Devicetype: "firewall",
+						Commands: []FeatureCommands{
+							{
+								Feature: "interface",
+								Actions: map[string][]string{
+									"create": {
+										"set network interface {{interface}} ip {{ipaddress}}",
+									},
+									"update": {
+										"set network interface {{interface}} ip {{ipaddress}}",
+									},
+								},
+							},
+							{
+								Feature: "vlan",
+								Actions: map[string][]string{
+									"create": {
+										"set vlan {{vlanid}} name {{vlanname}}",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr:    false,
+			wantWarn:   true,
+			warnString: "vendor \"paloalto\" already defined, overriding with values from",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var visited map[string]bool
-			got, err := LoadConfig(tt.configFile, visited)
+
+			got, err := LoadConfig(tt.configFile, nil)
 
 			if tt.wantErr {
 				if err == nil {
@@ -204,6 +243,9 @@ func TestLoadConfig(t *testing.T) {
 				if tt.warnString != "" {
 					for _, warnString := range got.Warnings {
 						if strings.Contains(warnString, tt.warnString) {
+							if !reflect.DeepEqual(got.Config, tt.want) {
+								t.Fatalf("got %#v; want %#v", got.Config, tt.want)
+							}
 							return
 						}
 					}

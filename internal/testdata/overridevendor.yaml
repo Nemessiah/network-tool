@@ -1,0 +1,11 @@
+config:
+  additionalfiles: ["basic_good.yaml"]
+  configversion: "1.0.0"
+
+paloalto:
+  devicetype: firewall
+  commands:
+    - feature: vlan
+      actions:
+        create:
+          - set vlan {{vlanid}} name {{vlanname}}
