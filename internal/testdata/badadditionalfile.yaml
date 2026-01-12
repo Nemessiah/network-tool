@@ -1,0 +1,11 @@
+config:
+  additionalfiles: ["./badyaml.yaml"]
+  configversion: "1.0.0"
+
+additionalpaloalto:
+  devicetype: firewall
+  commands:
+    - feature: interface
+      actions:
+        create:
+          - set network interface {{interface}} ip {{ipaddress}}

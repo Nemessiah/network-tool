@@ -1,0 +1,18 @@
+config:
+  additionalfiles: []
+  configversion: "1.0.0"
+
+paloalto:
+  devicetype: firewall
+  commands:
+    - feature: interface
+      actions:
+        create:
+          - set network interface {{interface}} ip {{ipaddress}}
+        update:
+          - set network interface {{interface}} ip {{ipaddress}}
+
+    - feature: vlan
+      actions:
+        create:
+          - set vlan {{vlanid}} name {{vlanname}}
