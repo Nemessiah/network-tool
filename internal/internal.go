@@ -18,6 +18,7 @@ var defaultConfig []byte
 
 type Config struct {
 	Additionalfiles []string `yaml:"additionalfiles"`
+	ConfigVersion   string   `yaml:"configversion"`
 }
 
 type Template struct {
@@ -45,65 +46,87 @@ type Fullconfig struct {
 	Vendors map[string]Deviceinfo `yaml:",inline"`
 }
 
+type LoadResult struct {
+	Config   Fullconfig
+	Warnings []string
+}
+
 var Reg = regexp.MustCompile(`\{\{([\w-]+)\}\}`)
 
-func LoadConfig(file string, visited map[string]bool) (Fullconfig, error) {
-	var cfg Fullconfig
-	visited = make(map[string]bool)
+func LoadConfig(file string, visited map[string]bool) (LoadResult, error) {
+	var result LoadResult
+	if visited == nil {
+		visited = make(map[string]bool)
+	}
 
 	abs, err := filepath.Abs(file)
 	if err != nil {
-		return cfg, err
+		return result, err
 	}
-	file = abs
+	file = filepath.Clean(abs)
 
 	// If we've seen this file already, skip it
 	if visited[file] {
-		log.Printf("WARN: skipping already-loaded config %s", file)
-		return cfg, nil
+		result.Warnings = append(
+			result.Warnings,
+			fmt.Sprintf("skipping already-loaded config %s", file),
+		)
+		return result, nil
 	}
 	visited[file] = true
 
 	// Load file from OS
 	raw, err := os.ReadFile(file)
 	if err != nil {
-		return cfg, err
+		return result, err
 	}
 
 	// Unmarshal YAML
-	err = yaml.Unmarshal(raw, &cfg)
+	err = yaml.Unmarshal(raw, &result.Config)
 	if err != nil {
-		return cfg, err
+		return result, err
 	}
 
 	// Load additional config files if any
-	if len(cfg.Config.Additionalfiles) > 0 {
-		for _, path := range cfg.Config.Additionalfiles {
+	if len(result.Config.Config.Additionalfiles) > 0 {
+		for _, path := range result.Config.Config.Additionalfiles {
 
-			path = filepath.Join(filepath.Dir(file), path)
+			path := strings.TrimSpace(path)
+			if path == "" {
+				result.Warnings = append(result.Warnings, fmt.Sprintf("empty additionalfiles entry in %s", file))
+				continue
+			}
+			if !filepath.IsAbs(path) {
+				path = filepath.Join(filepath.Dir(file), path)
+			}
+			path = filepath.Clean(path)
 
 			additionalCfg, err := LoadConfig(path, visited)
 			if err != nil {
-				return cfg, fmt.Errorf("failed to load additional config %q: %w", path, err)
+				return result, fmt.Errorf("failed to load additional config %q: %w", path, err)
 			}
-
+			result.Warnings = append(result.Warnings, additionalCfg.Warnings...)
 			// Merge Vendors from additional config
-			if cfg.Vendors == nil {
-				cfg.Vendors = make(map[string]Deviceinfo)
+			if result.Config.Vendors == nil {
+				result.Config.Vendors = make(map[string]Deviceinfo)
 			}
-			for k, v := range additionalCfg.Vendors {
-				if _, exists := cfg.Vendors[k]; exists {
-					log.Printf("WARN: vendor %q already defined, overriding with values from %s",
-						k,
-						path,
+			for k, v := range additionalCfg.Config.Vendors {
+				if _, exists := result.Config.Vendors[k]; exists {
+					result.Warnings = append(
+						result.Warnings,
+						fmt.Sprintf(
+							"vendor %q already defined, overriding with values from %s",
+							k, path,
+						),
 					)
 				}
-				cfg.Vendors[k] = v
+
+				result.Config.Vendors[k] = v
 			}
 		}
 	}
 
-	return cfg, nil
+	return result, nil
 }
 
 func ConfigCheck() (string, error) {

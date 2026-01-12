@@ -15,7 +15,6 @@ import (
 
 func main() {
 	var err error
-	var visited map[string]bool
 
 	configPath, err := internal.ConfigCheck()
 
@@ -24,18 +23,22 @@ func main() {
 		return
 	}
 
-	Config, err := internal.LoadConfig(configPath, visited)
+	result, err := internal.LoadConfig(configPath, nil)
 
 	if err != nil {
 		log.Fatalf("config load failed: %v", err)
 		return
 	}
-
+	if len(result.Warnings) > 0 {
+		for _, warnings := range result.Warnings {
+			log.Printf("%s", warnings)
+		}
+	}
+	Config := result.Config
 	err = internal.ConfigValidation(&Config)
 
 	if err != nil {
 		log.Fatalf("config validation failed: %v", err)
-		return
 	}
 
 	name := interactive.Prompt[string](os.Stdin, "Enter VLAN Name: ")
