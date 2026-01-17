@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: app-postgres
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+      POSTGRES_DB: network_tool
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
