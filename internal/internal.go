@@ -146,6 +146,9 @@ func ConfigCheck() (string, error) {
 		fmt.Printf("No config found. Creating default config at %s\n", configPath)
 
 		os.MkdirAll(filepath.Dir(configPath), 0755)
+		if err != nil {
+			return configPath, err
+		}
 
 		err = os.WriteFile(configPath, defaultConfig, 0644)
 		if err != nil {
