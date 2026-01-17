@@ -51,10 +51,17 @@ func TestSelectInterface(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := SelectInterface(tt.networkType, tt.vlan)
 
-			if err == nil && tt.wantErr {
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
 				if tt.errString != "" && !strings.Contains(err.Error(), tt.errString) {
 					t.Fatalf("error = %q; want substring %q", err.Error(), tt.errString)
 				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
 			}
 			if !strings.Contains(got, tt.want) {
 				t.Fatalf("got %#v; want %#v", got, tt.want)
@@ -105,10 +112,17 @@ func TestGetFirstUsableCIDR(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := GetFirstUsableCIDR(tt.cidr)
 
-			if err == nil && tt.wantErr {
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
 				if tt.errString != "" && !strings.Contains(err.Error(), tt.errString) {
 					t.Fatalf("error = %q; want substring %q", err.Error(), tt.errString)
 				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
 			}
 			if !strings.Contains(got, tt.want) {
 				t.Fatalf("got %#v; want %#v", got, tt.want)
