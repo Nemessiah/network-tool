@@ -53,6 +53,8 @@ type LoadResult struct {
 
 var Reg = regexp.MustCompile(`\{\{([\w-]+)\}\}`)
 
+var AppConfig Fullconfig
+
 func LoadConfig(file string, visited map[string]bool) (LoadResult, error) {
 	var result LoadResult
 	if visited == nil {
@@ -243,4 +245,32 @@ func UsedDeviceTypes(cfg Fullconfig) ([]string, error) {
 	}
 
 	return usedTypes, nil
+}
+
+func GenerateConfig() error {
+	configPath, err := ConfigCheck()
+
+	if err != nil {
+		return fmt.Errorf("Unable to find, or create config: %v", err)
+	}
+
+	result, err := LoadConfig(configPath, nil)
+
+	if err != nil {
+		return fmt.Errorf("config load failed: %v", err)
+
+	}
+	if len(result.Warnings) > 0 {
+		for _, warnings := range result.Warnings {
+			log.Printf("%s", warnings)
+		}
+	}
+	AppConfig = result.Config
+	err = ConfigValidation(&AppConfig)
+
+	if err != nil {
+		return fmt.Errorf("config validation failed: %v", err)
+	}
+
+	return nil
 }

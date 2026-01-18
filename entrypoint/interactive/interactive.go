@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"regexp"
@@ -50,31 +49,6 @@ func Prompt[T any](input io.Reader, prompt string) T {
 
 func Cli() {
 	var err error
-
-	configPath, err := internal.ConfigCheck()
-
-	if err != nil {
-		log.Fatalf("Unable to find, or create config: %v", err)
-		return
-	}
-
-	result, err := internal.LoadConfig(configPath, nil)
-
-	if err != nil {
-		log.Fatalf("config load failed: %v", err)
-		return
-	}
-	if len(result.Warnings) > 0 {
-		for _, warnings := range result.Warnings {
-			log.Printf("%s", warnings)
-		}
-	}
-	Config := result.Config
-	err = internal.ConfigValidation(&Config)
-
-	if err != nil {
-		log.Fatalf("config validation failed: %v", err)
-	}
 
 	name := Prompt[string](os.Stdin, "Enter VLAN Name: ")
 
@@ -172,7 +146,7 @@ func Cli() {
 	}
 
 	var extractedCommands map[string][]string
-	extractedCommands = commands.ExtractVendorCommandsForAction(Config, action)
+	extractedCommands = commands.ExtractVendorCommandsForAction(internal.AppConfig, action)
 
 	network := commands.Network{
 		VlanName: name,
