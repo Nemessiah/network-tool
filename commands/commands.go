@@ -17,6 +17,7 @@ type Network struct {
 }
 
 type NetworkParams struct {
+	Action      string  `json:"action"`
 	Interface   string  `json:"interface"`
 	Network     Network `json:"network"`
 	NetworkType string  `json:"networktype"`
