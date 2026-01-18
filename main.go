@@ -25,10 +25,10 @@ func main() {
 		fmt.Println("Error: --mode is required")
 		os.Exit(1)
 	case "cli":
-		interactive.Cli()
+		interactive.CliEntry()
 	case "api":
 		fmt.Println("Running in mode:", *mode)
-		api.Api()
+		api.ApiEntry()
 	default:
 		fmt.Println("Invalid mode:", *mode)
 		os.Exit(1)

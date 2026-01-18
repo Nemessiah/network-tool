@@ -9,7 +9,7 @@ import (
 	"github.com/nemessiah/network-tool/internal"
 )
 
-func Api() {
+func ApiEntry() {
 	server := http.NewServeMux()
 
 	server.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {

@@ -47,7 +47,7 @@ func Prompt[T any](input io.Reader, prompt string) T {
 	}
 }
 
-func Cli() {
+func CliEntry() {
 	var err error
 
 	name := Prompt[string](os.Stdin, "Enter VLAN Name: ")
