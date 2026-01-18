@@ -1,46 +1,67 @@
 package api
 
 import (
-	"fmt"
-	"io"
+	"encoding/json"
 	"log"
 	"net/http"
-	"os"
+
+	"github.com/nemessiah/network-tool/commands"
+	"github.com/nemessiah/network-tool/internal"
 )
 
 func Api() {
 	server := http.NewServeMux()
 
 	server.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "failed to read request body", http.StatusBadRequest)
+		if r.Method != http.MethodPost {
+			http.Error(w, "POST only", http.StatusMethodNotAllowed)
 			return
 		}
-		bodyStr := string(body)
-		msg := fmt.Sprintf(
-			"your string: \"%s\" has %d characters.",
-			bodyStr,
-			len(bodyStr),
-		)
+		defer r.Body.Close()
 
-		out := []byte(msg)
-		_, err = os.ReadFile("badfilename.txt")
-
-		if err != nil {
-			// Since "the app handles checks", this can be whatever you want:
-			// - always 500
-			// - always 400
-			// - or pass through the error text
-			w.WriteHeader(403)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		var input commands.NetworkParams
+		dec := json.NewDecoder(r.Body)
+		dec.DisallowUnknownFields() // catches typos like "networkType" vs "networktype"
+		if err := dec.Decode(&input); err != nil {
+			http.Error(w, "bad JSON: "+err.Error(), http.StatusBadRequest)
 			return
+		}
+
+		if input.Action == "" {
+			http.Error(w, "missing required field: action", http.StatusBadRequest)
+			return
+		}
+		log.Printf("action bytes=%v", []byte(input.Action))
+
+		// TEMP debug (remove once fixed)
+		log.Printf("decoded input: %+v", input)
+		log.Printf("config: %+v", internal.AppConfig)
+
+		extractedCommands := commands.ExtractVendorCommandsForAction(internal.AppConfig, input.Action)
+		log.Printf("action=%q extracted vendors=%d", input.Action, len(extractedCommands))
+
+		outputCommands := make(map[string][]string)
+		reflectedInput, err := commands.MakeStructMap(input)
+		if err != nil {
+			http.Error(w, "reflect input: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		for vendor, commandArray := range extractedCommands {
+			replaced := make([]string, 0, len(commandArray))
+			for _, cmd := range commandArray {
+				temp, err := commands.ReplaceKeys(reflectedInput, cmd)
+				if err != nil {
+					http.Error(w, "replace keys: "+err.Error(), http.StatusBadRequest)
+					return
+				}
+				replaced = append(replaced, temp)
+			}
+			outputCommands[vendor] = replaced
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(out)
+		_ = json.NewEncoder(w).Encode(outputCommands)
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", server))
