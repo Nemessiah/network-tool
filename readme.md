@@ -62,8 +62,8 @@ commands for: cisco
 
 ### Planned
 
-* [ ] Tests for all functions (v0.6)
-* [ ] All v0 goals complete, and tested (v1.0)
+* [x] Tests for all functions (v0.6)
+* [x] All v0 goals complete, and tested (v1.0)
 * [ ] additional input methods (v1.1)
 
   * [ ] JSON
