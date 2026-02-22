@@ -59,11 +59,10 @@ commands for: cisco
 * [x] Validation of custom commands (v0.3)
 * [x] Automatic replacement of keys in commands (v0.4)
 * [x] Program functioning (v0.5)
-
-### Planned
-
 * [x] Tests for all functions (v0.6)
 * [x] All v0 goals complete, and tested (v1.0)
+
+### Planned
 * [ ] additional input methods (v1.1)
 
   * [ ] JSON
