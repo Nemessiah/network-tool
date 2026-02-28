@@ -2,6 +2,8 @@
 
 Network Tool is a CLI utility for generating vendor-specific network configuration commands from structured input. It is designed to reduce manual command creation errors by validating input and automatically replacing variables in predefined command templates.
 
+This branch is focused on adding support for storing configuration in a **database** instead of relying only on local YAML files.
+
 The tool is currently at **version 0.5** and is under active development.
 
 The primary goal of this project is to learn **Go** and software development in general. In addition, it aims to provide a flexible, vendor-agnostic way to generate validated network configuration commands from structured input.
@@ -15,6 +17,7 @@ The primary goal of this project is to learn **Go** and software development in 
 * Validation of custom command definitions
 * Automatic replacement of input keys in command templates
 * Grouped command output per vendor
+* In-progress database-backed configuration support (branch focus)
 
 ---
 
@@ -63,6 +66,7 @@ commands for: cisco
 * [x] All v0 goals complete, and tested (v1.0)
 
 ### Planned
+* [ ] Database-backed configuration source (active branch focus)
 * [ ] additional input methods (v1.1)
 
   * [ ] JSON
@@ -114,7 +118,9 @@ go run .
 
 ## Configuration
 
-Command schemas are defined using **YAML configuration files**. These schemas describe vendors, device types, and ordered command definitions grouped by feature and CRUD action.
+This branch is focused on moving command schemas to a **database-backed configuration model**, so configuration is no longer tied only to local YAML files.
+
+YAML remains documented here as the baseline format while database integration is being added. These schemas describe vendors, device types, and ordered command definitions grouped by feature and CRUD action.
 
 Multiple configuration files may be used. If the same vendor name is defined more than once, the **last loaded definition wins**.
 
