@@ -163,7 +163,6 @@ func ConfigCheck() (string, error) {
 
 func ConfigValidation(fullconfig *Fullconfig) error {
 	placeholderRe := regexp.MustCompile(`\{\{(\w+)\}\}`)
-	crudOps := []string{"create", "read", "update", "delete"}
 
 	for vendorName, vendor := range fullconfig.Vendors {
 
@@ -187,7 +186,7 @@ func ConfigValidation(fullconfig *Fullconfig) error {
 			// Drop invalid CRUD operations
 			cleanActions := make(map[string][]string)
 			for opName, cmds := range feature.Actions {
-				if slices.Contains(crudOps, opName) {
+				if ActionIsValid(opName) {
 					cleanActions[opName] = cmds
 				} else {
 					log.Printf(
@@ -273,4 +272,13 @@ func GenerateConfig() error {
 	}
 
 	return nil
+}
+
+func ActionIsValid(action string) bool {
+	switch action {
+	case "create", "read", "update", "delete":
+		return true
+	default:
+		return false
+	}
 }

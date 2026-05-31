@@ -52,10 +52,14 @@ import (
 // - EnsureInitialRevision(actionID int, createdBy string) (int, error): guarantees each action has a starting revision.
 // - SeedDefaults() error: loads baseline vendors/features/actions/commands.
 
-type VendorTable struct {
-	Id         int
-	Name       string
-	DeviceType string
+// -----Misc SQL-----//
+
+var tables = map[string]string{
+	"vendors":          "vendors",
+	"features":         "features",
+	"actions":          "actions",
+	"action_revisions": "action_revisions",
+	"commands":         "commands",
 }
 
 func OpenDatabaseConnection(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
@@ -95,6 +99,8 @@ func startTransaction(ctx context.Context, connection *pgxpool.Conn) (pgx.Tx, er
 	return transaction, nil
 }
 
+//-----TableAgnostic Tooling-----//
+
 func processRows[T any](rows pgx.Rows, scan func(pgx.Rows) (T, error)) ([]T, error) {
 	defer rows.Close()
 
@@ -114,7 +120,9 @@ func SelectAllOnTable[T any](ctx context.Context, dbpool *pgxpool.Pool, table st
 	var err error
 	var output []T
 
-	query := fmt.Sprintln("SELECT * FROM ", table)
+	if tables[table] != table {
+		return nil, fmt.Errorf("Invalid Table: %s", table)
+	}
 
 	connection, err := getConnectionFromPool(ctx, dbpool)
 	if err != nil {
@@ -122,7 +130,7 @@ func SelectAllOnTable[T any](ctx context.Context, dbpool *pgxpool.Pool, table st
 	}
 	defer connection.Release()
 
-	rows, err := connection.Query(ctx, query)
+	rows, err := connection.Query(ctx, "SELECT * FROM $1", table)
 	if err != nil {
 		return output, err
 	}
@@ -132,6 +140,14 @@ func SelectAllOnTable[T any](ctx context.Context, dbpool *pgxpool.Pool, table st
 	}
 
 	return output, nil
+}
+
+//-----Vendor-----//
+
+type VendorTable struct {
+	Id         int
+	Name       string
+	DeviceType string
 }
 
 func ProcessVendorTable(rows pgx.Rows) (VendorTable, error) {
@@ -145,7 +161,7 @@ func ProcessVendorTable(rows pgx.Rows) (VendorTable, error) {
 
 }
 
-func UpdateVendorName(ctx context.Context, dbpool *pgxpool.Pool, vendorName string, vendorId string) (string, error) {
+func UpdateVendorName(ctx context.Context, dbpool *pgxpool.Pool, vendorName string, vendorId int) (string, error) {
 	var err error
 	var output string
 
@@ -165,7 +181,7 @@ func UpdateVendorName(ctx context.Context, dbpool *pgxpool.Pool, vendorName stri
 		ctx,
 		`UPDATE name = $1
 		FROM vendors
-		WHERE name = $2`,
+		WHERE id = $2`,
 		vendorName,
 		vendorId,
 	)
@@ -177,7 +193,41 @@ func UpdateVendorName(ctx context.Context, dbpool *pgxpool.Pool, vendorName stri
 	return rows.String(), nil
 }
 
-func SelectVendorbyId(ctx context.Context, dbpool *pgxpool.Pool, vendorId string) ([]VendorTable, error) {
+func UpdateVendorDeviceType(ctx context.Context, dbpool *pgxpool.Pool, newDeviceType string, oldDeviceType string, vendorId int) (string, error) {
+	var err error
+	var output string
+
+	connection, err := getConnectionFromPool(ctx, dbpool)
+	if err != nil {
+		return output, err
+	}
+	defer connection.Release()
+
+	tx, err := startTransaction(ctx, connection)
+	if err != nil {
+		return output, err
+	}
+	defer tx.Rollback(ctx)
+
+	rows, err := tx.Exec(
+		ctx,
+		`UPDATE devicetype = $1
+		FROM vendors
+		WHERE id = $2
+		AND devicetype = $3`,
+		newDeviceType,
+		vendorId,
+		oldDeviceType,
+	)
+	if err != nil {
+		return output, err
+	}
+	tx.Commit(ctx)
+
+	return rows.String(), nil
+}
+
+func SelectVendorbyId(ctx context.Context, dbpool *pgxpool.Pool, vendorId int) ([]VendorTable, error) {
 	var err error
 	var output []VendorTable
 
@@ -203,4 +253,109 @@ func SelectVendorbyId(ctx context.Context, dbpool *pgxpool.Pool, vendorId string
 	}
 
 	return output, err
+}
+
+//-----features-----//
+
+type FeatureTable struct {
+	Id       int
+	VendorId int
+	Name     string
+}
+
+/*
+func ProcessREPLACEMETable(rows pgx.Rows) (TABLESTRUCT, error) {
+	var output TABLESTRUCT
+
+	err := rows.Scan(output.COLUMN)
+	if err != nil {
+		return output, err
+	}
+	return output, nil
+}
+
+func UpdateREPLACEME(ctx context.Context, dbpool *pgxpool.Pool, COLUMN string, COLUMNId int) (string, error) {
+	var err error
+	var output string
+
+	connection, err := getConnectionFromPool(ctx, dbpool)
+	if err != nil {
+		return output, err
+	}
+	defer connection.Release()
+
+	tx, err := startTransaction(ctx, connection)
+	if err != nil {
+		return output, err
+	}
+	defer tx.Rollback(ctx)
+
+	rows, err := tx.Exec(
+		ctx,
+		QUERY,
+		COLUMN,
+		COLUMNId
+	)
+	if err != nil {
+		return output, err
+	}
+	tx.Commit(ctx)
+
+	return rows.String(), nil
+}
+
+func SelectREPLACEME(ctx context.Context, dbpool *pgxpool.Pool, vendorId int) ([]VENDORSTRUCT, error) {
+	var err error
+	var output []VENDORSTRUCT
+
+	connection, err := getConnectionFromPool(ctx, dbpool)
+	if err != nil {
+		return output, err
+	}
+	defer connection.Release()
+
+	rows, err := connection.Query(
+		ctx,
+		QUERY,
+		COLUMN,
+		COLUMNId
+	)
+	if err != nil {
+		return output, err
+	}
+	output, err = processRows(rows, PROCESSTABLEFUNCTION)
+	if err != nil {
+		return output, err
+	}
+
+	return output, err
+}
+*/
+//-----Action Revisions-----//
+
+type ActionRevisions struct {
+	Id        int
+	CreatedAt string
+	CreatedBy string
+	comment   string
+}
+
+//-----Actions-----//
+
+type ActionsTable struct {
+	Id                int
+	FeatureId         int
+	Action            string
+	CurrentRevisionId int
+}
+
+//NOTE: don't forget to use `internal.ActionIsValid()` for action validation
+
+//-----Commands-----//
+
+type CommandsTable struct {
+	Id         int
+	RevisionId int
+	position   int
+	command    string
 }
